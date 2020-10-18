@@ -14,7 +14,7 @@ export class Game extends Component {
     public snakeHeadModel: Node = null;
 
     start() {
-        this._snake = new Snake(new Vec2(25, 25), [
+        this._snake = new Snake(new Vec2(12, 12), [
             new SnakeBodySegment(Direction.right, 5),
             new SnakeBodySegment(Direction.up, 3),
         ]);
