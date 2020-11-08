@@ -1,6 +1,7 @@
-import { Component, game, instantiate, Label, Node, systemEvent, SystemEventType, Vec3, _decorator } from "cc";
+import { AudioSource, Component, game, instantiate, Label, Node, _decorator } from "cc";
 import { Direction, flipDirection, Snake, SnakeBodySegment } from "../Snake";
 import { Vec2 } from "../Vec2";
+import { Input } from "./Input";
 
 @_decorator.ccclass("Game")
 export class Game extends Component {
@@ -16,6 +17,20 @@ export class Game extends Component {
     @_decorator.property(Node)
     public gameOverUi: Node = null;
 
+    @_decorator.property(Input)
+    public input: Input = null!;
+
+    @_decorator.property(AudioSource)
+    public bgmAudio: AudioSource = null!;
+
+    @_decorator.property(AudioSource)
+    public eatAudio: AudioSource = null!;
+
+    @_decorator.property(AudioSource)
+    public defeatAudio: AudioSource = null!;
+
+    @_decorator.property(AudioSource)
+    public prohibitedAudio: AudioSource = null!;
 
     public width: number = 25;
     public height: number = 25;
@@ -38,16 +53,18 @@ export class Game extends Component {
         this._headNode.active = true;
         this._headNode.setParent(this.node.parent);
 
-        systemEvent.on(SystemEventType.KEY_UP, (event) => {
+        this.input.on(Input.CLICKED, (key: string) => {
             let direction: Direction | null = null;
-            switch (event.rawEvent.key) {
-                case 'w': case 'W': direction = Direction.up; break;
-                case 'a': case 'A': direction = Direction.left; break;
-                case 's': case 'S': direction = Direction.down; break;
-                case 'd': case 'D': direction = Direction.right; break;
+            switch (key) {
+                case 'w': direction = Direction.up; break;
+                case 'a': direction = Direction.left; break;
+                case 's': direction = Direction.down; break;
+                case 'd': direction = Direction.right; break;
             }
             if (direction !== null) {
-                if (direction === flipDirection(this._snake.body[0].direction)) {
+                if (direction === this._snake.body[0].direction) {
+                    this.prohibitedAudio.play();
+                } else if (direction === flipDirection(this._snake.body[0].direction)) {
                     this._snake.step();
                 } else {
                     this._snake.turn(direction);
@@ -58,8 +75,8 @@ export class Game extends Component {
                 this._snake.grow();
                 this._generateFood();
                 this.score+=10;
+                this.eatAudio.play();
             }
-
         });
     }
 
@@ -72,6 +89,8 @@ export class Game extends Component {
             this.gameOverUi.active = true;
             const labelComponent = this.gameOverUi.getComponent(Label);
             labelComponent.string = `最终得分为: ${this.score},你真牛逼呀!`;
+            this.bgmAudio.pause();
+            this.defeatAudio.play();
             game.pause();
         }
 
